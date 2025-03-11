@@ -110,9 +110,5 @@ npm test
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## Contact
 
-Anish More - amore159@ucr.edu
-
-Project Link: [https://github.com/AnishmMore/sequence-board-game](https://github.com/AnishmMore/sequence-board-game)
 ```
