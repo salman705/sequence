@@ -1,0 +1,252 @@
+/* Ensure the base Tailwind styles are imported once at the root of your project */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+body {
+  background-color: #20123A;
+  color: white;
+}
+
+.main-bg{
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5vh;
+  flex-direction: column;
+}
+
+.playOnline {
+  font-weight: 700;
+  border: none;
+  background-color: #e4ca56;
+  font-size: 60px;
+  cursor: pointer;
+  margin-top: 35vh;
+  padding: 6px 10px;
+  border-radius: 5px;
+  outline: none;
+}
+
+.playWithFriendsBtn{
+  font-weight: 700;
+  border: none;
+  background-color: #10d9d2;
+  font-size: 60px;
+  cursor: pointer;
+  margin-top: 2vh;
+  padding: 6px 10px;
+  border-radius: 5px;
+  outline: none;
+}
+
+.inputRoomId {
+  font-size: 20px; /* Increase font size */
+  color: black; /* Text color */
+  padding: 10px; /* Add some padding for better visual */
+  margin-bottom: 20px; /* Space between input box and buttons */
+  border: 2px solid #10d9d2; /* Make it fancy with a border */
+  border-radius: 5px; /* Rounded corners */
+  outline: none; /* Remove focus outline */
+  width: 50%; /* Adjust width */
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: space-around; /* Add space between buttons */
+  width: 35%; /* Adjust based on preference */
+}
+
+
+.createRoomBtn, .joinRoomBtn {
+  font-weight: 700;
+  border: none;
+  background-color: #10d9d2;
+  font-size: 20px; /* Adjust font size */
+  cursor: pointer;
+  margin: 0 10px; /* Add space between buttons */
+  padding: 10px 20px; /* Increase padding */
+  border-radius: 5px;
+  outline: none;
+}
+
+.game-board {
+  @apply h-[730px] w-[800px] bg-custom-brown rounded-lg flex justify-center items-center p-16 my-auto relative;
+  margin-left: 0.1rem; /* This moves the board slightly to the right */
+  transform: rotateX(5deg); /* This tilts the board for a 3D effect */
+  box-shadow: 10px 20px 30px rgba(0, 0, 0, 0.5); /* This adds depth with shadows */
+}
+
+.inner-container {
+  @apply h-[715px] w-[800px] bg-custom-brown rounded-lg shadow-lg;
+  @apply grid grid-cols-10 grid-rows-10 gap-3.5;
+}
+
+.shuffled-deck-container {
+  @apply absolute bottom-0 right-0 mb-4 mr-4 sm:bottom-[100%] sm:right-[31%] sm:mb-[17rem] transform scale-110 transition duration-500 ease-in-out hover:scale-125;
+
+  background: #5a3f37; /* Dark brown background */
+  box-shadow: 
+    0 0 .5rem #d2b48c, /* Light brown glow */
+    0 0 1rem #d2b48c, /* Light brown outer glow */
+    inset 0 0 .5rem #d2b48c; /* Inner glow effect */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Soft white border */
+}
+
+.score-container{
+  @apply absolute bottom-0 right-0 sm:bottom-[100%] sm:right-[32%] sm:mb-[4rem] mb-4 mr-4 p-2 rounded-lg shadow-xl text-white text-sm;
+  background: linear-gradient(145deg, #5a3f37, #2c1e12); /* Updated gradient for a wooden look */
+  box-shadow: 5px 5px 15px #2c1e12, -5px -5px 15px #8b6553; /* Box shadow for 3D effect */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.player-deck-container {
+  @apply absolute bottom-0 right-0 mb-4 mr-4 p-4 rounded-md shadow-xl flex flex-col items-center;
+  width: 400px; /* Adjust width as needed */
+  background: linear-gradient(145deg, #5a3f37, #2c1e12); /* Updated gradient for a wooden look */
+  box-shadow: 5px 5px 15px #2c1e12, -5px -5px 15px #8b6553; /* Box shadow for 3D effect */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Optional: subtle border for depth */
+}
+
+.player-deck-header {
+  @apply text-lg font-bold text-white text-center mb-4; /* Updated text color for better contrast */
+}
+
+.player-deck-cards {
+  @apply flex justify-center space-x-2; /* Space out the cards */
+}
+
+.player-turn-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-top: -15rem;
+  margin-right: 20px;
+}
+
+.current-turn {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.2rem;
+}
+
+.player-tokens {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  padding-top: 0.1rem;
+}
+
+.token-info {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.2rem; /* Add some space between the text and the chip */
+}
+
+
+.deck-count {
+  @apply text-sm font-bold p-2.5 bg-white rounded shadow text-gray-700 absolute;
+  z-index: 10; /* Ensures the element is above other elements */
+}
+
+.card {
+  @apply bg-white flex justify-center items-center rounded-md shadow-md transition duration-300 ease-in-out;
+}
+
+.card:hover {
+  @apply transform scale-105;
+}
+
+.sequence-text {
+  @apply text-4xl font-bold text-black absolute;
+}
+
+.sequence-text-left {
+  @apply left-8 top-1/2 -translate-y-1/2 -translate-x-1/2 rotate-90;
+}
+
+.sequence-text-right {
+  @apply right-8 top-1/2 -translate-y-1/2 translate-x-1/2 -rotate-90;
+}
+
+.poker-chip-red {
+  @apply w-10 h-10 rounded-full flex justify-center items-center;
+  @apply border-4 border-white; /* Preserve the white border to look like the edge of a chip */
+  @apply text-black text-sm font-bold z-10; /* Maintain text styling and positioning */
+  
+  /* Enhanced visual styling */
+  background: radial-gradient(circle, rgba(255,0,0,1) 0%, rgba(135,0,0,1) 100%); /* Gradient effect */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), inset 0px 2px 4px rgba(255, 255, 255, 0.2); /* Outer shadow for depth, inner shadow for inner depth */
+  text-shadow: 1px 1px 2px #000; /* Text shadow for better legibility */
+}
+
+.poker-chip-blue {
+  @apply w-10 h-10 rounded-full flex justify-center items-center;
+  @apply border-4 border-white; /* Preserve the white border to look like the edge of a chip */
+  @apply text-black text-sm font-bold z-10; /* Adjusted text color for better contrast with blue */
+
+  /* Enhanced visual styling for blue chip */
+  background: radial-gradient(circle, rgba(0, 116, 217, 1) 0%, rgba(0, 31, 63, 1) 100%); /* Gradient effect with shades of blue */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2), inset 0px 2px 4px rgba(255, 255, 255, 0.2); /* Outer shadow for depth, inner shadow for inner depth */
+  text-shadow: 1px 1px 2px #000; /* Text shadow for better legibility */
+}
+
+.card.highlighted {
+  @apply border-4 border-yellow-600; /* Adds a yellow border to the card */
+  @apply scale-150; /* Scales up the card slightly */
+  box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6); /* Adds a yellow glow around the card */
+}
+
+.selected-card {
+  /* Styles to highlight the card */
+  border: 2px solid yellow; /* Example: a yellow border to indicate selection */
+  transform: scale(1.1); /* Example: slightly enlarge the card */
+}
+
+.waiting{
+  overflow:hidden;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  font-size: 30px;
+  top:0;
+  left:0;
+  bottom: 0;
+  right: 0;
+}
+
+.waiting p:after {
+  content: '.';
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: '.';
+  }
+  40%, 60% {
+    content: '..';
+  }
+  80%, 100% {
+    content: '...';
+  }
+}
+
+.current-move-player2{
+  color: rgba(255,0,0,1) !important;
+  text-shadow: 1px 1px 2px #000; /* Text shadow for better legibility */
+}
+
+.current-move-player1{
+  color: rgba(0, 116, 217, 1) !important;
+  text-shadow: 1px 1px 2px #000; /* Text shadow for better legibility */
+}
+
+.current-move-player3{
+  color: rgba(44, 232, 50, 0.5);
+  text-shadow: 1px 1px 2px #000; /* Text shadow for better legibility */
+}
