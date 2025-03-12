@@ -38,7 +38,9 @@ class RoomController {
           isCustom: true,
           empty: true,
           playersName: [playerName],
+          maxPlayers: 3, // Allow 3 players
         });
+        
         await newRoom.save();
 
         socket.join(roomId);
@@ -60,7 +62,7 @@ class RoomController {
       try {
         const room = await Room.findOne({ roomId });
 
-        if (room && room.players.length < 2) {
+        if (room && room.players.length < 3) {
           room.players.push(socket.id);
           room.playersName.push(playerName);
           room.empty = false;
@@ -102,12 +104,12 @@ class RoomController {
         } else {
           room.players.push(socket.id);
           room.playersName.push(playerName);
-          room.empty = room.players.length < 2;
+          room.empty = room.players.length < 3;
           await room.save();
         }
 
         socket.join(room.roomId);
-        if (room.players.length === 2) {
+        if (room.players.length === 3) {
           await this.startGameForRoom(room.roomId, playerName, socket.id);
           if (typeof callback === "function") callback({ roomId: room.roomId });
         } else {

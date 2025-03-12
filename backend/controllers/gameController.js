@@ -13,23 +13,28 @@ function initializeGame(cards) {
     );
     const player1InitialHand = initialDeck.slice(0, 5);
     const player2InitialHand = initialDeck.slice(5, 10);
-    const remainingDeck = initialDeck.slice(10);
+    const player3InitialHand = initialDeck.slice(10, 15);
+    const remainingDeck = initialDeck.slice(15);
 
-    games = {
+    const games = {
         players: {
-            player1: { hand: player1InitialHand, isTurn: true, socketId: null , name: null },
-            player2: { hand: player2InitialHand, isTurn: false, socketId: null , name: null},
+            player1: { hand: player1InitialHand, isTurn: true, socketId: null, name: null },
+            player2: { hand: player2InitialHand, isTurn: false, socketId: null, name: null },
+            player3: { hand: player3InitialHand, isTurn: false, socketId: null, name: null },
         },
         scores: {
             red: 0,
+            green: 0,
             blue: 0,
         },
         shuffledDeck: remainingDeck,
         cards: null,
         protectedPatterns: [],
     };
+    
     return games;
 }
+
 function handleCardSelection(
     game,
     cardId,
@@ -38,58 +43,88 @@ function handleCardSelection(
     currentTurn,
     selectedCard
 ) {
-    let cardIndex = cardId - 1; // cardId starts from 1 and maps directly to the index by subtracting 1
-    let currentPlayer = currentTurn === 'player1' ? 'player1' : 'player2';
-    let nextPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
-    let playerHand = game.players[currentPlayer].hand;
-    let cardInQuestion = game.cards[cardIndex];
+    const playerOrder = ['player1', 'player2', 'player3'];
+    const currentIndex = playerOrder.indexOf(currentTurn);
+    const nextPlayer = playerOrder[(currentIndex + 1) % 3];
+    const playerColors = {
+        player1: "blue",
+        player2: "red",
+        player3: "green"
+    };
+
+    let cardIndex = cardId - 1;
+    let playerHand = game.players[currentTurn].hand;
+    let cardInQuestion = cards[cardIndex];
 
     const isCardProtected = (cardIndex, protectedPatterns) => {
-        return protectedPatterns.includes(cardIndex);
-    }
+        return protectedPatterns.some(pattern => pattern.includes(cardIndex + 1));
+    };
 
     if (selectedCard > 100 && selectedCard <= 104) {
         cardInQuestion.selected = "True";
-        cardInQuestion.selectedby = currentPlayer == "player1" ? "blue" : "red";
-    }
-    else if (selectedCard > 104 && selectedCard <= 108 && cardInQuestion.selected === "True") {
-        if (!isCardProtected(cardInQuestion, game.protectedPatterns)) {
+        cardInQuestion.selectedby = playerColors[currentTurn];
+    } else if (selectedCard > 104 && selectedCard <= 108 && cardInQuestion.selected === "True") {
+        if (!isCardProtected(cardIndex, game.protectedPatterns)) {
             cardInQuestion.selected = false;
             cardInQuestion.selectedby = "";
-        }
-        else {
+        } else {
             return { success: false, message: "Wrong move: Card is protected." };
         }
-    }
-    else {
+    } else {
         cardInQuestion.selected = "True";
-        cardInQuestion.selectedby = currentPlayer == "player1" ? "blue" : "red";
+        cardInQuestion.selectedby = playerColors[currentTurn];
     }
 
-    let indexToRemove = playerHand.findIndex(
-        (card) => card.id === cardId || (selectedCard > 100 && selectedCard < 109 && card.id === selectedCard) || (card.matches && card.matches.includes(cardId))
+    const indexToRemove = playerHand.findIndex(
+        (card) => card.id === cardId || 
+        (selectedCard > 100 && selectedCard < 109 && card.id === selectedCard) || 
+        (card.matches && card.matches.includes(cardId))
     );
+    
+    if (indexToRemove === -1) {
+        return { success: false, message: "Card not found in hand" };
+    }
+
     playerHand.splice(indexToRemove, 1);
     if (shuffledDeck.length > 0) {
-        let newCard = shuffledDeck.shift();
+        const newCard = shuffledDeck.shift();
         playerHand.push(newCard);
     }
 
-    game.players[currentPlayer].isTurn = false;
-    game.players[nextPlayer].isTurn = true;
-    game.players[currentPlayer].hand = playerHand;
+    // Update turns
+    playerOrder.forEach(player => {
+        game.players[player].isTurn = (player === nextPlayer);
+    });
 
-    return (player = { success: true, game, shuffledDeck, cards, currentPlayer, nextPlayer, playerHand });
+    return { 
+        success: true, 
+        game: {
+            ...game,
+            players: {
+                ...game.players,
+                [currentTurn]: {
+                    ...game.players[currentTurn],
+                    hand: playerHand
+                }
+            },
+            shuffledDeck,
+            cards
+        },
+        currentPlayer: currentTurn,
+        nextPlayer
+    };
 }
 
 function Pattern(game, cards) {
-    let board = Array(10).fill(null).map(() => Array(10).fill({ color: null, isPartOfPattern: false, index: -1 }));
+    let board = Array(10).fill(null).map(() => 
+        Array(10).fill({ color: null, isPartOfPattern: false, index: -1 })
+    );
     game.protectedPatterns = game.protectedPatterns || [];
     const cornerIndices = [1, 10, 91, 100];
 
     const getPositionFromId = (id) => {
-        let row = Math.floor((id - 1) / 10);
-        let col = (id - 1) % 10;
+        const row = Math.floor((id - 1) / 10);
+        const col = (id - 1) % 10;
         return { row, col };
     };
 
@@ -97,9 +132,12 @@ function Pattern(game, cards) {
         cards.forEach((card) => {
             if (card.selected === "True") {
                 const { row, col } = getPositionFromId(card.id);
-                board[row][col] = { color: card.selectedby, isPartOfPattern: false, index: card.id };
+                board[row][col] = { 
+                    color: card.selectedby, 
+                    isPartOfPattern: false, 
+                    index: card.id 
+                };
             }
-
         });
     }
 
@@ -109,127 +147,131 @@ function Pattern(game, cards) {
         let count = 0;
         let patternIndices = [];
         for (let i = 0; i < arr.length; i++) {
-            let cell = arr[i];
-            let effectiveColor = cell.color || (isCornerIndex(cell.index) ? color : null);
-            if (effectiveColor == color) {
+            const cell = arr[i];
+            const effectiveColor = cell.color || (isCornerIndex(cell.index) ? color : null);
+            if (effectiveColor === color) {
                 count++;
                 patternIndices.push(cell.index);
-                if (count >= 5) {
-                    console.log(patternIndices);
-                    if (isPatternNew(patternIndices)) {
-                        return { isPattern: true, patternIndices };
-                    }
+                if (count >= 5 && isPatternNew(patternIndices)) {
+                    return { isPattern: true, patternIndices };
                 }
             } else {
                 count = 0;
                 patternIndices = [];
             }
-        };
+        }
         return { isPattern: false, patternIndices: [] };
     };
 
     const isPatternNew = (patternIndices) => {
-        let existingPatterns = game.protectedPatterns || [];
-        //if the new pattern is entirely new
-        let isEntirelyNew = !existingPatterns.some(pattern =>
+        const existingPatterns = game.protectedPatterns || [];
+        const isEntirelyNew = !existingPatterns.some(pattern =>
             patternIndices.every(index => pattern.includes(index))
         );
-        //for overlap with existing protected patterns, allowing up to one card ID overlap
-        let isValidOverlap = existingPatterns.map(pattern =>
-            patternIndices.filter(index => pattern.includes(index)).length
-        ).every(count => count <= 1);
-
+        const isValidOverlap = existingPatterns.every(pattern =>
+            patternIndices.filter(index => pattern.includes(index)).length <= 1
+        );
         return isEntirelyNew && isValidOverlap;
     };
 
     const addProtectedPattern = (pattern) => {
-        game.protectedPatterns = game.protectedPatterns || [];
         game.protectedPatterns.push(pattern);
     };
 
     const checkPatterns = (color) => {
         const getSequencesOfFive = (arr) => {
-            let sequences = [];
+            const sequences = [];
             for (let i = 0; i <= arr.length - 5; i++) {
                 sequences.push(arr.slice(i, i + 5));
             }
             return sequences;
         };
 
-        const getDownRightDiagonal = (startRow, startCol) => {
-            let cells = [];
-            for (let i = 0; startRow + i < 10 && startCol + i < 10; i++) {
-                cells.push({ ...board[startRow + i][startCol + i], index: (startRow + i) * 10 + startCol + i + 1 }); // Adjusted index to match card IDs
-            }
-            return cells;
-        };
-
-        const getUpRightDiagonal = (startRow, startCol) => {
-            let cells = [];
-            for (let i = 0; startRow - i >= 0 && startCol + i < 10; i++) {
-                cells.push({ ...board[startRow - i][startCol + i], index: (startRow - i) * 10 + startCol + i + 1 }); // Adjusted index to match card IDs
-            }
-            return cells;
-        };
-
-        const getDiagonals = (board, getDiagonalCells) => {
-            let diagonals = [];
+        const getDiagonals = (board, diagonalFunc) => {
+            const diagonals = [];
             for (let row = 0; row < 10; row++) {
                 for (let col = 0; col < 10; col++) {
-                    let diagonalCells = getDiagonalCells(row, col, board);
-                    if (diagonalCells.length >= 5) {
-                        diagonals.push(diagonalCells);
+                    const cells = diagonalFunc(row, col);
+                    if (cells.length >= 5) {
+                        diagonals.push(cells);
                     }
                 }
             }
             return diagonals;
         };
 
-        const allDiagonals = [
-            ...getDiagonals(board, getDownRightDiagonal),
-            ...getDiagonals(board, getUpRightDiagonal)
-        ];
-
-        allDiagonals.forEach(diagonal => {
-            getSequencesOfFive(diagonal).forEach(sequence => {
-                let result = checkConsecutive(sequence, color);
-                if (result.isPattern && isPatternNew(result.patternIndices)) {
+        // Check rows
+        for (let row = 0; row < 10; row++) {
+            const rowCells = board[row].map((cell, col) => ({
+                ...cell,
+                index: row * 10 + col + 1
+            }));
+            getSequencesOfFive(rowCells).forEach(sequence => {
+                const result = checkConsecutive(sequence, color);
+                if (result.isPattern) {
                     addProtectedPattern(result.patternIndices);
-                    game.scores[color] += 1; // Increment score for new diagonal patterns
+                    game.scores[color]++;
                 }
             });
-        });
+        }
 
+        // Check columns
+        for (let col = 0; col < 10; col++) {
+            const colCells = board.map((row, rowIndex) => ({
+                ...row[col],
+                index: rowIndex * 10 + col + 1
+            }));
+            getSequencesOfFive(colCells).forEach(sequence => {
+                const result = checkConsecutive(sequence, color);
+                if (result.isPattern) {
+                    addProtectedPattern(result.patternIndices);
+                    game.scores[color]++;
+                }
+            });
+        }
+
+        // Check diagonals
+        const checkDiagonal = (startRow, startCol, rowStep, colStep) => {
+            const cells = [];
+            let row = startRow;
+            let col = startCol;
+            while (row >= 0 && row < 10 && col >= 0 && col < 10) {
+                cells.push({
+                    ...board[row][col],
+                    index: row * 10 + col + 1
+                });
+                row += rowStep;
+                col += colStep;
+            }
+            return cells;
+        };
+
+        // Check all possible diagonals
         for (let i = 0; i < 10; i++) {
-
-            let row = board[i].map((cell, index) => ({ ...cell, index: i * 10 + index + 1 }));
-            getSequencesOfFive(row).forEach(sequence => {
-                let rowResult = checkConsecutive(sequence, color);
-                if (rowResult.isPattern && isPatternNew(rowResult.patternIndices)) {
-                    addProtectedPattern(rowResult.patternIndices);
-                    game.scores[color] += 1; // Increment score here for new horizontal patterns
-                }
-            });
-
-            let col = board.map((_, rowIndex) => board[rowIndex][i]).map((cell, index) => ({ ...cell, index: index * 10 + i + 1 }));
-            getSequencesOfFive(col).forEach(sequence => {
-                let colResult = checkConsecutive(sequence, color);
-                if (colResult.isPattern && isPatternNew(colResult.patternIndices)) {
-                    addProtectedPattern(colResult.patternIndices);
-                    game.scores[color] += 1; // Increment score here for new vertical patterns
-                }
+            [checkDiagonal(i, 0, 1, 1),    // Down-right from left edge
+             checkDiagonal(0, i, 1, 1),    // Down-right from top edge
+             checkDiagonal(i, 9, 1, -1),   // Down-left from right edge
+             checkDiagonal(0, i, 1, -1)]   // Down-left from top edge
+            .forEach(diagonal => {
+                getSequencesOfFive(diagonal).forEach(sequence => {
+                    const result = checkConsecutive(sequence, color);
+                    if (result.isPattern) {
+                        addProtectedPattern(result.patternIndices);
+                        game.scores[color]++;
+                    }
+                });
             });
         }
     };
 
-    ["blue", "red"].forEach(color => checkPatterns(color));
-    let winner = Object.keys(game?.scores || {}).find(color => game.scores[color] === 2) || null;
-    return (result = { winner, game });
+    ["blue", "red", "green"].forEach(color => checkPatterns(color));
+    const winner = Object.keys(game.scores).find(color => game.scores[color] >= 2) || null;
+    
+    return { winner, game };
 }
 
 function checkForWinner(game, cards) {
-    let result = Pattern(game, cards);
-    return result;
+    return Pattern(game, cards);
 }
 
 module.exports = {
